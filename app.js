@@ -2,27 +2,85 @@
 
 const express = require("express");
 const bodyParser = require("body-parser");
-const date = require(__dirname + "/date.js");
+const mongoose = require('mongoose');
 
 const app = express();
 
 app.set('view engine', 'ejs');
 
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({
+  extended: true
+}));
 app.use(express.static("public"));
 
-const items = ["Buy Food", "Cook Food", "Eat Food"];
+mongoose.connect("mongodb://localhost:27017/todolistDB", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+
+const itemsSchema = new mongoose.Schema({
+  name : String
+});
+
+const Item = mongoose.model("Item",itemsSchema);
+
+const items = [];
 const workItems = [];
+
+const item1 = new Item({
+  name : "Welcome to personal Todo list"
+});
+
+const item2 = new Item({
+  name : "Hit + button to add new items"
+});
+
+const item3 = new Item({
+  name : "<- Click here to check off the item"
+});
+
+const defaultItems = [item1,item2,item3];
+
+// Item.insertMany(defaultItems,function(err){
+//   if(err){
+//     console.log(err);
+//   } else{
+//     console.log("Successfully done with insertion");
+//   }
+// });
+
+// Item.deleteMany(function(err){
+//   if(err){
+//     console.log(err);
+//   }else{
+//     console.log('Done');
+//   }
+// });
+
+
 
 app.get("/", function(req, res) {
 
-const day = date.getDate();
+  Item.find({},function(err,items){
 
-  res.render("list", {listTitle: day, newListItems: items});
-
+    if(items.length === 0){
+      Item.insertMany(defaultItems,function(err){
+        if(err){
+          console.log(err);
+        } else{
+          console.log("Successfully done with insertion");
+        }
+      });
+      res.redirect('/');
+    } else{
+      res.render("list", {
+        listTitle: "Today",
+        newListItems: items
+      });
+    }
 });
-
-app.post("/", function(req, res){
+});
+app.post("/", function(req, res) {
 
   const item = req.body.newItem;
 
@@ -35,11 +93,14 @@ app.post("/", function(req, res){
   }
 });
 
-app.get("/work", function(req,res){
-  res.render("list", {listTitle: "Work List", newListItems: workItems});
+app.get("/work", function(req, res) {
+  res.render("list", {
+    listTitle: "Work List",
+    newListItems: workItems
+  });
 });
 
-app.get("/about", function(req, res){
+app.get("/about", function(req, res) {
   res.render("about");
 });
 
