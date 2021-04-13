@@ -90,14 +90,6 @@ app.post("/", function(req, res) {
 
   item.save();
   res.redirect('/');
-  // Item.insertOne(item,function(err){
-  //   if(err){
-  //     console.log(err);
-  //   } else{
-  //     console.log('ItemName inserted');
-  //   }
-  // });
-
   // if (req.body.list === "Work") {
   //   workItems.push(item);
   //   res.redirect("/work");
@@ -105,6 +97,20 @@ app.post("/", function(req, res) {
   //   items.push(item);
   //   res.redirect("/");
   // }
+});
+
+app.post('/delete',function(req,res){
+   const checkedBox = req.body.checkbox;
+
+   Item.findByIdAndDelete(checkedBox,function(err){
+     if(err){
+       console.log(err);
+     }else{
+       console.log("Success in deletion");
+       res.redirect('/');
+     }
+   });
+
 });
 
 app.get("/work", function(req, res) {
