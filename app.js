@@ -24,6 +24,13 @@ const itemsSchema = new mongoose.Schema({
 
 const Item = mongoose.model("Item",itemsSchema);
 
+const listSchema = new mongoose.Schema({
+  name : String,
+  items : [itemsSchema]
+});
+
+const List = mongoose.model("List",listSchema);
+
 const items = [];
 const workItems = [];
 
@@ -41,6 +48,10 @@ const item3 = new Item({
 
 const defaultItems = [item1,item2,item3];
 
+
+
+
+
 // Item.insertMany(defaultItems,function(err){
 //   if(err){
 //     console.log(err);
@@ -49,7 +60,7 @@ const defaultItems = [item1,item2,item3];
 //   }
 // });
 
-// Item.deleteMany(function(err){
+// List.deleteMany(function(err){
 //   if(err){
 //     console.log(err);
 //   }else{
@@ -113,15 +124,44 @@ app.post('/delete',function(req,res){
 
 });
 
-app.get("/work", function(req, res) {
-  res.render("list", {
-    listTitle: "Work List",
-    newListItems: workItems
-  });
-});
+// app.get("/work", function(req, res) {
+//   res.render("list", {
+//     listTitle: "Work List",
+//     newListItems: workItems
+//   });
+// });
 
 app.get("/about", function(req, res) {
   res.render("about");
+});
+
+
+app.get('/:customListName',function(req,res){
+  const customListName = req.params.customListName;
+
+  List.findOne({name:customListName},function(err,itemFound){
+    if(!err){
+      if(!itemFound){
+        const list = new List({
+          name : customListName,
+          items : defaultItems
+        });
+        list.save();
+        res.redirect("/" + customListName);
+      }else{
+        console.log("Exist already");
+        res.render("list",{
+          listTitle : itemFound.name,
+          newListItems : itemFound.items
+        });
+      }
+    }
+  });
+
+  // res.render("list", {
+  //   listTitle: "Today",
+  //   newListItems: list.list
+  // });
 });
 
 app.listen(3000, function() {
