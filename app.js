@@ -18,6 +18,8 @@ mongoose.connect("mongodb://localhost:27017/todolistDB", {
   useUnifiedTopology: true
 });
 
+mongoose.set('useFindAndModify', false);
+
 const itemsSchema = new mongoose.Schema({
   name : String
 });
@@ -95,12 +97,28 @@ app.post("/", function(req, res) {
 
   const itemName = req.body.newItem;
 
+  const listName = req.body.list;
+
   const item = new Item({
     name : itemName
   });
 
-  item.save();
-  res.redirect('/');
+  if(listName === "Today"){
+    item.save();
+    res.redirect('/');
+  } else{
+    List.findOne({name: listName}, function(err, listfound){
+      if(!err){
+        if(listfound){
+          listfound.items.push(item);
+          listfound.save();
+          res.redirect("/" + listName);
+        }
+      }
+    });
+  }
+
+
   // if (req.body.list === "Work") {
   //   workItems.push(item);
   //   res.redirect("/work");
@@ -112,16 +130,24 @@ app.post("/", function(req, res) {
 
 app.post('/delete',function(req,res){
    const checkedBox = req.body.checkbox;
-
-   Item.findByIdAndDelete(checkedBox,function(err){
-     if(err){
-       console.log(err);
-     }else{
-       console.log("Success in deletion");
-       res.redirect('/');
-     }
-   });
-
+   const listName = req.body.listName;
+   console.log(listName);
+   if(listName === "Today"){
+     Item.findByIdAndDelete(checkedBox,function(err){
+       if(err){
+         console.log(err);
+       }else{
+         console.log("Success in deletion");
+         res.redirect('/');
+       }
+     });
+   }else{
+     List.findOneAndUpdate({name: listName},{$pull : {items:{_id : checkedBox}}}, function(err,foundList){
+       if(!err){
+         res.redirect('/' + listName);
+       }
+     });
+   }
 });
 
 // app.get("/work", function(req, res) {
